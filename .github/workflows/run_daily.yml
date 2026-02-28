@@ -1,0 +1,53 @@
+name: NCD Breach Trend Analyzer
+
+# Runs daily at 1 PM IST (7:30 AM UTC)
+on:
+  schedule:
+    - cron: '30 7 * * *'
+  workflow_dispatch:
+
+jobs:
+  run-analyzer:
+    name: Run NCD Breach Trend Analyzer
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install selenium webdriver-manager pillow google-api-python-client
+
+      - name: Setup Chrome for WhatsApp image conversion
+        uses: browser-actions/setup-chrome@v2
+        with:
+          install-chromedriver: true
+          install-dependencies: true
+
+      - name: Setup Google Service Account
+        env:
+          SERVICE_ACCOUNT_JSON: ${{ secrets.SERVICE_ACCOUNT_JSON }}
+        run: |
+          echo "$SERVICE_ACCOUNT_JSON" > service_account_key.json
+          if [ -f service_account_key.json ]; then
+            echo "Service account key created"
+          else
+            echo "ERROR: SERVICE_ACCOUNT_JSON secret not set"
+            exit 1
+          fi
+
+      - name: Run NCD Breach Trend Analyzer
+        env:
+          WHAPI_TOKEN: ${{ secrets.WHAPI_TOKEN }}
+          WHATSAPP_PHONE: ${{ secrets.WHATSAPP_PHONE }}
+        run: python ncd_breach_trend_analyzer.py
