@@ -23,18 +23,23 @@ except ImportError:
 
 # -----------------------------------------------------------------------------
 # CONFIG - Set via environment variables (required in GitHub Actions)
-# Use secrets: WHAPI_TOKEN, WHATSAPP_PHONE (comma-separated for multiple)
+# Use secrets: WHAPI_TOKEN, WHATSAPP_PHONE (comma/newline/semicolon separated for multiple)
 # -----------------------------------------------------------------------------
+import re
+def _parse_recipients(s):
+    if not s:
+        return []
+    return [p.strip() for p in re.split(r'[,\n;]+', str(s)) if p.strip()]
 WHAPI_TOKEN = os.getenv('WHAPI_TOKEN', '')
-WHATSAPP_PHONE = [p.strip() for p in os.getenv('WHATSAPP_PHONE', '').split(',') if p.strip()]
+WHATSAPP_PHONE = _parse_recipients(os.getenv('WHATSAPP_PHONE', ''))
 WHATSAPP_ENABLED = os.getenv('WHATSAPP_ENABLED', '1') != '0'
 CHROMEDRIVER_PATH = None  # Optional: path to chromedriver, or None for webdriver-manager
 
 def _get_recipients():
-    """Return list of WhatsApp recipients. Env WHATSAPP_PHONE can be comma-separated."""
+    """Return list of WhatsApp recipients. Env WHATSAPP_PHONE: comma, newline, or semicolon separated."""
     env = os.getenv('WHATSAPP_PHONE')
     if env:
-        return [p.strip() for p in env.split(',') if p.strip()]
+        return _parse_recipients(env)
     if isinstance(WHATSAPP_PHONE, str):
         return [WHATSAPP_PHONE] if WHATSAPP_PHONE else []
     return list(WHATSAPP_PHONE) if WHATSAPP_PHONE else []
@@ -284,6 +289,7 @@ def send_sheet_range_to_whatsapp(worksheet, range="A1:O24", caption=None, log_fu
     if not token or not recipients:
         _log("WHAPI_TOKEN or WHATSAPP_PHONE not set - skipping WhatsApp send", "WARNING", log_func)
         return
+    _log(f"Sending to {len(recipients)} recipient(s)", "INFO", log_func)
 
     if not requests:
         _log("requests package required for WHAPI. Install: pip install requests", "WARNING", log_func)

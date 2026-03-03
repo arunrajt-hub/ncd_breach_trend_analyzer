@@ -1129,21 +1129,16 @@ def main():
                         else:
                             logger.info(msg)
                     ts = datetime.now().strftime('%d-%b-%Y %H:%M')
-                    try:
-                        send_sheet_range_to_whatsapp(
-                            ncd_trend_worksheet,
-                            range="A1:S23",
-                            caption=f"NCD Breach % - {ts}",
-                            log_func=_wh_log,
-                        )
-                        send_sheet_range_to_whatsapp(
-                            ncd_trend_worksheet,
-                            range="A26:T49",
-                            caption=f"NCD Breach # - {ts}",
-                            log_func=_wh_log,
-                        )
-                    except Exception as e:
-                        logger.warning(f"WhatsApp send failed (non-fatal): {e}")
+                    for range_a1, caption in [("A1:S23", f"NCD Breach % - {ts}"), ("A26:T49", f"NCD Breach # - {ts}")]:
+                        try:
+                            send_sheet_range_to_whatsapp(
+                                ncd_trend_worksheet,
+                                range=range_a1,
+                                caption=caption,
+                                log_func=_wh_log,
+                            )
+                        except Exception as e:
+                            logger.warning(f"WhatsApp send failed for {range_a1} (non-fatal): {e}")
 
                     spreadsheet_url = f"https://docs.google.com/spreadsheets/d/{NCD_DEST_SPREADSHEET_ID}/edit"
                     logger.info(f"\n🔗 Destination Sheet URL: {spreadsheet_url}")

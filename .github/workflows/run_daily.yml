@@ -52,12 +52,12 @@ jobs:
           WHAPI_TOKEN: ${{ secrets.WHAPI_TOKEN }}
           WHATSAPP_PHONE: ${{ secrets.WHATSAPP_PHONE }}
           CHROME_BIN: ${{ steps.chrome.outputs.chrome-path }}
-        run: python ncd_breach_trend_analyzer.py
+        run: python ncd_breach_trend_analyzer.py 2>&1 | tee ncd_run.log; exit ${PIPESTATUS[0]}
 
       - name: Upload logs on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: ncd-analyzer-logs
-          path: "*.log"
+          path: ncd_run.log
           if-no-files-found: ignore
