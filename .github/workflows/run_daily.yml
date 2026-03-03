@@ -29,6 +29,7 @@ jobs:
           pip install selenium webdriver-manager pillow google-api-python-client
 
       - name: Setup Chrome for WhatsApp image conversion
+        id: chrome
         uses: browser-actions/setup-chrome@v2
         with:
           install-chromedriver: true
@@ -50,4 +51,13 @@ jobs:
         env:
           WHAPI_TOKEN: ${{ secrets.WHAPI_TOKEN }}
           WHATSAPP_PHONE: ${{ secrets.WHATSAPP_PHONE }}
+          CHROME_BIN: ${{ steps.chrome.outputs.chrome-path }}
         run: python ncd_breach_trend_analyzer.py
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ncd-analyzer-logs
+          path: "*.log"
+          if-no-files-found: ignore
